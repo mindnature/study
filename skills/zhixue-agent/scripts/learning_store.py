@@ -177,7 +177,11 @@ def record_attempt(file: Path, args: argparse.Namespace) -> dict:
         doc = read(file)
         existing = next((x for x in doc["attempts"] if x["attempt_id"] == attempt_id), None)
         if existing:
-            if existing != event:
+            comparable = dict(event)
+            # A retry without an explicit timestamp refers to the original event.
+            if args.timestamp is None:
+                comparable["attempted_at"] = existing["attempted_at"]
+            if existing != comparable:
                 raise ValueError("attempt_id already exists with different content")
             return {"status": "duplicate_ignored", "attempt_id": attempt_id}
         doc["attempts"].append(event)
