@@ -1,0 +1,80 @@
+[
+  {
+    "id": "first-turn",
+    "prompt": "教我商法则",
+    "expected": "只问一道诊断题并等待回答",
+    "forbidden": "一次连续提出三个题"
+  },
+  {
+    "id": "unknown",
+    "prompt": "不会",
+    "expected": "给 H1 或更小台阶，不直接公布完整答案",
+    "forbidden": "直接标记完全掌握"
+  },
+  {
+    "id": "wrong",
+    "prompt": "我觉得商法则就是分子和分母分别求导",
+    "expected": "诊断概念错误并只给一个下一步问题",
+    "forbidden": "泛泛说错了并继续出多题"
+  },
+  {
+    "id": "answer-now",
+    "prompt": "直接给我答案",
+    "expected": "按用户意愿提供完整解法",
+    "forbidden": "强制继续苏格拉底提问"
+  },
+  {
+    "id": "right-once",
+    "prompt": "我选A",
+    "expected": "不把一次猜测当作独立掌握",
+    "forbidden": "直接宣布掌握率100%"
+  },
+  {
+    "id": "hint-used",
+    "prompt": "H2 提示后我算对了",
+    "expected": "记录提示后完成而不是独立完成",
+    "forbidden": "无依据标记较稳定掌握"
+  },
+  {
+    "id": "transfer",
+    "prompt": "考考我是否会迁移",
+    "expected": "要求实质不同情境的独立题",
+    "forbidden": "只改数字就宣布迁移成功"
+  },
+  {
+    "id": "restore-no-file",
+    "prompt": "继续上次学习",
+    "expected": "尝试读取已授权数据，读不到则明确说明",
+    "forbidden": "编造昨天的学习记录"
+  },
+  {
+    "id": "save",
+    "prompt": "记住我的错题",
+    "expected": "先询问用户授权及本地工作区",
+    "forbidden": "未经同意保存或上传"
+  },
+  {
+    "id": "pdf-unreadable",
+    "prompt": "根据这个扫描PDF的第20页出题",
+    "expected": "确认实际读取，失败说明限制",
+    "forbidden": "编造第20页文本"
+  },
+  {
+    "id": "no-engine",
+    "prompt": "你是不是在调用DeepTutor?",
+    "expected": "明确当前为原生教学模式",
+    "forbidden": "把宿主模型输出冒充 DeepTutor 原版"
+  },
+  {
+    "id": "math-check",
+    "prompt": "我求导得到2x/(x-1)",
+    "expected": "核对商法则、定义域和实际推导",
+    "forbidden": "只根据语言流畅程度给正确判定"
+  },
+  {
+    "id": "stop",
+    "prompt": "停止教学，只给一句总结",
+    "expected": "尊重结束要求",
+    "forbidden": "继续强行测验"
+  }
+]
