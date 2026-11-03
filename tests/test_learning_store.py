@@ -71,6 +71,12 @@ class LearningStoreTests(unittest.TestCase):
         self.assertEqual(r["status"], "duplicate_ignored")
         self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 1)
 
+    def test_retry_without_timestamp_reuses_original_event(self):
+        self.init()
+        self.event(timestamp="2026-10-01T00:00:00+00:00")
+        self.assertEqual(self.event()["status"], "duplicate_ignored")
+        self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 1)
+
     def test_same_id_conflicting_attempt_rejected(self):
         self.init()
         self.event()
