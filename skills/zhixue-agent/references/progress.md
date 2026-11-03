@@ -1,42 +1,23 @@
-# 学习进度与持久化约定
+# 跨会话学习档案（V0.2）
 
-本技能没有内建数据库；持久化完全依赖宿主提供的文件工具，并需要用户明确同意。默认只在聊天上下文内保持状态。
+## 保存前必须授权
+默认只在当前对话内维护学习状态。用户首次要求“记住错题 / 保存学习记录 / 继续追踪”时，应先说明存储内容，并让用户选择**本地工作区**。得到明确同意后，在该工作区的 .zhixue/learning-records.json 中记录最少必要学习证据；以后只在相同授权范围追加。用户撤销授权时立即停止读写，不自行删除旧数据；删除需单独确认。
 
-## 可选的本地数据文件
+禁止把记录放进 Skill 安装目录、公共 Git 仓库、未经批准的云盘。不要保存学生真实姓名、身份证、完整教材内容、完整答题文本、账户或 API 凭据。
 
-在用户确认后，将学习证据保存到**用户明确选择的工作区**内，例如 `.zhixue/learning-records.json`。不要写进 Skill 安装目录、系统目录或聊天外部云盘。避免保存完整教材、API 凭据、敏感身份信息、学生个人信息。
+## 格式与升级
+schema_version 为 0.2.0。attempts 是追加式事件，每条应有稳定 attempt_id；重试相同 ID 不应重复。记录 course、objective、question_id、activity（diagnostic/practice/transfer/delayed）、result（correct/incorrect/uncertain）、hint_level（0–3）、verification、error_type、attempted_at。掌握度是由证据计算出来的结果，不保存随意修改的百分比。
 
-推荐 JSON 结构：
+可选 stdlib 本地工具 scripts/learning_store.py：
+~~~bash
+python scripts/learning_store.py --workspace "/user/selected/workspace" init --consent
+python scripts/learning_store.py --workspace "/user/selected/workspace" record --course "经济数学" --objective "商法则" --question-id "q1" --activity practice --result correct --hint-level 0 --verification checked --error-type none --attempt-id "attempt-001"
+python scripts/learning_store.py --workspace "/user/selected/workspace" summary
+~~~
+这里的 --consent 只是计算机参数，**绝不代替向用户取得真实授权**。只有用户授权且宿主确实存在 Python 时才使用；否则通过已有的宿主文件工具实现同样存储约定，若做不到则诚实告知当前不能跨会话记忆。
 
-```json
-{
-  "schema_version": "0.1.0",
-  "courses": [
-    {"id": "calculus", "title": "微积分", "objectives": ["链式法则"]}
-  ],
-  "attempts": [
-    {
-      "course_id": "calculus",
-      "objective": "链式法则",
-      "question_id": "chain-001",
-      "attempted_at": "2026-11-03",
-      "hint_level": 0,
-      "answer_outcome": "correct",
-      "assessment": "本次独立完成",
-      "verification": "substitution_or_teacher_review",
-      "notes": "已能区分内外函数"
-    }
-  ],
-  "review_plan": [{"objective": "链式法则", "suggested_after_days": [1,3,7]}]
-}
-```
-
-`verification` 只描述真实采取的验证方式：没有核对则设 `unverified`。`hint_level` 为 0–3。`assessment` 不应因为一次提示后做对变成“完全掌握”。日期必须使用当前会话准确日期，不能猜测。
-
-## 写入/读出规则
-
-- 先检测宿主是否有明确的工作区文件权限；只在用户同意后写入。
-- 新记录以追加方式保留，不覆盖历史尝试；更新前先读取文件和保留备份。
-- 出错时不丢数据，不将写入失败宣称为完成。
-- 在另一会话无法读取该文件时，明确告知学习记录不可用。
-- 间隔复习只是建议日期；定时提醒需另外的任务调度能力。
+## 记录与恢复
+- 记录应原子更新、保留备份，出错不丢已有历史；不得用新状态覆盖旧作答。
+- “下次复习”是建议日期，没有接入任务调度时不要宣称已创建提醒。
+- 下次用户说“继续学习”时先读取实际可访问的数据，讲明上次目标、最近困难和建议下一题。读取失败不虚构。
+- V0.1 使用过的 JSON 文件不可直接假设兼容；先备份并检查字段，再决定迁移。V0.2 工具对不认识的旧结构只读并报错，不悄悄覆盖。
