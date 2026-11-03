@@ -122,7 +122,7 @@ def init(file: Path, consent: bool) -> dict:
 def choose_status(attempts: list[dict]) -> str:
     if not attempts:
         return "学习中"
-    events = sorted(attempts, key=lambda x: (x["attempted_at"], x["attempt_id"]))
+    events = sorted(attempts, key=lambda x: x["attempted_at"])
     if events[-1]["result"] == "incorrect":
         return "待复习"
     strong = [x for x in events if x["result"] == "correct" and x["hint_level"] == 0
@@ -146,7 +146,7 @@ def summarize(record: dict) -> list[dict]:
         groups.setdefault((item["course"], item["objective"]), []).append(item)
     report = []
     for (course, objective), events in sorted(groups.items()):
-        events.sort(key=lambda x: (x["attempted_at"], x["attempt_id"]))
+        events.sort(key=lambda x: x["attempted_at"])
         last = events[-1]
         status = choose_status(events)
         days = 7 if status == "较稳定掌握" else 3 if status == "初步迁移成功" else 1
