@@ -110,7 +110,7 @@ class LearningStoreTests(unittest.TestCase):
     def test_latest_error_returns_to_review(self):
         self.init()
         self.event()
-        self.event(ident="mistake",result="incorrect")
+        self.event(ident="a-last",result="incorrect")
         self.assertEqual(self.status(), "待复习")
 
     def test_incompatible_old_record_is_not_overwritten(self):
