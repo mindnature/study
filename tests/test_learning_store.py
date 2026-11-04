@@ -69,13 +69,13 @@ class LearningStoreTests(unittest.TestCase):
         self.event(timestamp=t)
         r = self.event(timestamp=t)
         self.assertEqual(r["status"], "duplicate_ignored")
-        self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 1)
+        self.assertEqual(len(json.loads(self.store.read_text(encoding="utf-8"))["attempts"]), 1)
 
     def test_retry_without_timestamp_reuses_original_event(self):
         self.init()
         self.event(timestamp="2026-10-01T00:00:00+00:00")
         self.assertEqual(self.event()["status"], "duplicate_ignored")
-        self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 1)
+        self.assertEqual(len(json.loads(self.store.read_text(encoding="utf-8"))["attempts"]), 1)
 
     def test_same_id_conflicting_attempt_rejected(self):
         self.init()
@@ -128,7 +128,7 @@ class LearningStoreTests(unittest.TestCase):
                       "--verification", "checked", "--timestamp", "2026-11-03T09:00:00",
                       ok=False)
         self.assertIn("UTC offset", e["error"])
-        self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 0)
+        self.assertEqual(len(json.loads(self.store.read_text(encoding="utf-8"))["attempts"]), 0)
 
     def test_repeated_question_is_not_transfer(self):
         self.init()
@@ -171,7 +171,7 @@ class LearningStoreTests(unittest.TestCase):
                         "--hint-level", "0", "--verification", "checked",
                         "--timestamp", timestamp, ok=False)
         self.assertIn("future", err["error"])
-        self.assertFalse(json.loads(self.store.read_text())["attempts"])
+        self.assertFalse(json.loads(self.store.read_text(encoding="utf-8"))["attempts"])
 
     def test_summary_is_not_reminder(self):
         self.init()
