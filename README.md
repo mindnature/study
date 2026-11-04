@@ -1,37 +1,50 @@
-# 知学 Agent（Study） · v0.2.0
+# 知学 Agent · V1.0.0
 
-**一个面向 WorkBuddy、Codex 等支持 Agent Skills 的中文学习教练。** 上传学习材料、逐题互动、分级提示、独立测评、复习建议；可选在用户授权后将学习证据保存到本地工作区，供下次继续学习。
+**把 AI 变成真正会教、能检测学习效果、能继续上次学习的中文学习教练。**
 
-> 本仓库是独立 Skill 项目，不是 HKUDS/DeepTutor 官方发行版。原生模式使用宿主现有模型，不内置 DeepTutor Mastery Path、专用 RAG 或独立模型。普通用户不必安装 Docker/Python/Node 或另买 API Key（宿主服务本身可能有用量限制或费用）。
+本项目是适用于 WorkBuddy、Codex 等支持 Agent Skills 的**独立开源 Skill**。普通用户使用现有宿主模型，不需要另装 DeepTutor、Docker、Python、Node.js，也不需要额外购买大模型 API。宿主平台自身的订阅或模型调用可能有费用。
 
-## 最省事的使用方式
+> 注意：知学 Agent **不是 DeepTutor 本体**，不包含 HKUDS 原版 Mastery Path 或 RAG 引擎；只借鉴掌握导向的教学设计。原版 DeepTutor CLI 仅为可选高级连接。
 
-把下面这段话复制给有 Skill 安装权限的 WorkBuddy / Codex：
+## 一句话安装（推荐）
 
-> 请从 https://github.com/mindnature/study 安装「知学 Agent」Skill。安装目录是 skills/zhixue-agent，不是整个仓库根目录。先审核 SKILL.md 和脚本，只安装 Skills 文件到你支持的本地技能目录，重新加载并确认激活。不要安装 Docker、Python 或 DeepTutor，不运行远程安装脚本，不索要 API Key。安装后说出真正启用的技能名称与安装路径，再用一道数学题测试“一次只问一个问题”的行为；不要用普通聊天冒充 Skill 加载成功。
+把下面内容复制给 WorkBuddy、Codex 等有 Skills 和文件权限的智能体：
 
-然后可以直接说：“用知学 Agent 教我函数极限，先测我一道题，不要直接给答案。”
+> 请从 https://github.com/mindnature/study 安装最新版「知学 Agent」。阅读 SKILL.md 后仅安装 skills/zhixue-agent 目录到用户级 Skills 文件夹，不覆盖其他技能和学习数据。不要安装 Python、Docker、Node.js 或 DeepTutor，不索要 API Key，不执行远程安装脚本。安装后重载技能，报告实际启用的技能名称、版本和路径，再用一道数学题检验每轮只问一个问题。若没成功，请明确报告问题。
 
-如果你的客户端支持 ZIP 导入：在 [GitHub Actions](https://github.com/mindnature/study/actions) 找到最新成功的 Validate Skill 运行，下载 artifact **zhixue-agent-skill-v0.2.0**（需要登录 GitHub），解压外层 artifact 后导入里面的 zhixue-agent-skill-v0.2.0.zip。技能 ZIP **根目录直接有 SKILL.md**。不支持 ZIP 导入的客户端可通过技能目录手动安装，具体位置以宿主实际文档为准。
+**或者：** [直接下载最新 Skill ZIP](https://github.com/mindnature/study/releases/latest) → 在 WorkBuddy 支持 ZIP 导入时导入，或交给智能体完成解压和安装。注意：**Code → Download ZIP** 是整个仓库，不是专用 Skill ZIP。
 
-## 改进点
+[详细安装与排错](INSTALL.md) · [技能入口](skills/zhixue-agent/SKILL.md) · [版本发布](https://github.com/mindnature/study/releases)
 
-| V0.2 变化 | 使用者看到的效果 |
+## 用法
+- “知学 Agent，教我函数极限，一次只问一道题。”
+- “根据我上传的讲义出三道题，每次先给我一道。”
+- “这题我不会，先给我一点提示。”
+- “不要再提示了，考考我是不是真的学会。”
+- “帮我保存错题记录，下一次继续学习。”（首次需要授权本地文件位置）
+- “直接告诉我答案。”（尊重用户选择）
+
+## 功能边界
+
+| 能力 | 当前提供方式 |
 |---|---|
-| 一次一问与教学状态机 | 不一次丢出多道问题；回答后再决定下一步 |
-| 错因识别与分级提示 | 理解不足、计算错误等采取不同引导 |
-| 证据式掌握评价 | 区分提示后完成、独立完成、迁移与延迟复测 |
-| 文件来源可信约束 | 仅依据实际读到的教材生成回答，不编造页码 |
-| 可选本地学习档案 | 获得授权后保存真实作答证据；下次读取 |
-| 自动化代码测试 | CI 验证档案读写、错误处理、ZIP 结构 |
+| 分级提示、一次一问、个性化错误诊断 | 宿主模型遵循 Skill 规则；仍需客户端实测 |
+| 无提示独立测评、变式、延迟复测 | 证据式规则 + 可选本地学习记录 |
+| 依据教材问答、生成练习 | 取决于宿主真实文件读取能力，不伪造引用 |
+| 跨会话恢复学习历史 | 用户明确授权、且宿主具备文件读写权限时 |
+| 自动提醒、云端同步、多学生后台 | 未包含 |
+| DeepTutor 原版 Mastery Path | 未包含；若另装并配置 CLI，才可选连接 |
 
-## 学习档案：用户授权后才启用
+默认 **不保存历史**。用户第一次同意并选定本地工作区后，学习证据可以保存在 \`.zhixue/learning-records.json\`。支持文件工具的宿主直接读写；已有 Python 的宿主还可选用零依赖的脚本进行原子写入。**基础教学绝不依赖运行脚本。**
 
-默认**不自动保存学习历史**，不能仅凭安装 Skill 就跨会话记忆。当用户说“记住我的错题”，智能体应先询问是否允许在**用户自己选择的工作区**建立 .zhixue/learning-records.json。之后在有文件工具且得到持续授权时才可更新。
+## 安全、可验证与分发
 
-具备 Python 的宿主可选运行零依赖的 [learning_store.py](skills/zhixue-agent/scripts/learning_store.py) 进行原子写入、重复提交去重和掌握度证据摘要；**不具备 Python 仍可正常学习**，有文件工具时可按 [存储规范](skills/zhixue-agent/references/progress.md) 写入。没有权限或数据文件时必须明确告知“无法恢复”，不能假装已经记住。
+- 学习档案、教材及密钥不应提交到 GitHub；用户可以随时撤销文件写入授权。
+- v1.0.0 包通过 Linux、Windows CI 自动测试后，由 GitHub Releases 发布永久 ZIP 并附 SHA256SUMS。
+- 自动测试负责本地代码正确性、压缩包结构与脚本行为，**不证明 WorkBuddy/Codex 的每种模型都能按规则教学**；真实设备验收请见 [验收指南](examples/acceptance-tests.md)。
+- 有关 V0.1/V0.2 升级，请见 [迁移与升级说明](docs/UPGRADING.md)。
 
-## 开发者与验证
+## 开发者
 
 ~~~bash
 python -m unittest discover -s tests -p 'test_*.py' -v
@@ -39,18 +52,4 @@ python scripts/build_release.py
 python scripts/validate.py
 ~~~
 
-自动化测试只验证**本地脚本逻辑、静态结构和可安装 ZIP 结构**，不能证明不同模型都会遵循全部教学指令。真实教学交互需按 [验收场景](evals/scenarios.json) 在各个宿主客户端进行人工测试；WorkBuddy V0.1 已有安装反馈，V0.2 仍需重新验证。
-
-项目结构：
-- [Skill 入口](skills/zhixue-agent/SKILL.md)
-- [教学规则](skills/zhixue-agent/references/teaching.md)
-- [评价规则](skills/zhixue-agent/references/assessment.md)
-- [教材规则](skills/zhixue-agent/references/materials.md)
-- [学习档案规则](skills/zhixue-agent/references/progress.md)
-- [可选 DeepTutor 连接](skills/zhixue-agent/references/deeptutor-engine.md)
-- [V0.1 → V0.2 升级说明](docs/UPGRADING.md)
-- [更新日志](CHANGELOG.md)
-
-## 许可证与隐私
-
-原创 Skill 文件与脚本采用 MIT License；见 [第三方说明](THIRD_PARTY.md)。不要把教材或学习记录上传到 GitHub。高级 DeepTutor CLI 只能在用户要求并完成独立安装、配置和真实验证后启用，不得把原生教学模式冒充官方引擎。
+以上命令仅供开发维护，普通用户**不需要**运行。原创 Skill 代码与文档使用 [MIT 许可](LICENSE)，第三方声明见 [THIRD_PARTY.md](THIRD_PARTY.md)。
