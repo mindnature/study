@@ -34,9 +34,9 @@ class LearningStoreTests(unittest.TestCase):
         self.call("init", "--consent")
 
     def event(self, activity="practice", result="correct", hint="0",
-              verification="checked", ident="e1", timestamp=None):
+              verification="checked", ident="e1", timestamp=None, qid=None):
         args = ["record", "--course", "经济数学", "--objective", "商法则",
-                "--question-id", "q1", "--activity", activity, "--result", result,
+                "--question-id", qid or "q-" + ident, "--activity", activity, "--result", result,
                 "--hint-level", hint, "--verification", verification,
                 "--error-type", "none", "--attempt-id", ident]
         if timestamp:
@@ -129,6 +129,49 @@ class LearningStoreTests(unittest.TestCase):
                       ok=False)
         self.assertIn("UTC offset", e["error"])
         self.assertEqual(len(json.loads(self.store.read_text())["attempts"]), 0)
+
+    def test_repeated_question_is_not_transfer(self):
+        self.init()
+        t0 = datetime(2026, 11, 1, 9, tzinfo=UTC)
+        self.event(ident="base", qid="q-same", timestamp=t0.isoformat())
+        self.event(activity="transfer", ident="transfer", qid="q-same",
+                   timestamp=(t0 + timedelta(hours=1)).isoformat())
+        self.assertEqual(self.status(), "本次独立完成")
+
+    def test_repeated_question_is_not_delayed(self):
+        self.init()
+        t0 = datetime(2026, 11, 1, 9, tzinfo=UTC)
+        self.event(ident="base", timestamp=t0.isoformat())
+        self.event(activity="transfer", ident="transfer",
+                   timestamp=(t0 + timedelta(hours=1)).isoformat())
+        self.event(activity="delayed", ident="delayed", qid="q-transfer",
+                   timestamp=(t0 + timedelta(hours=28)).isoformat())
+        self.assertEqual(self.status(), "初步迁移成功")
+
+    def test_error_resets_prior_mastery_evidence(self):
+        self.init()
+        t0 = datetime(2026, 11, 1, 9, tzinfo=UTC)
+        self.event(ident="base", timestamp=t0.isoformat())
+        self.event(activity="transfer", ident="transfer",
+                   timestamp=(t0 + timedelta(hours=1)).isoformat())
+        self.event(activity="delayed", ident="delayed",
+                   timestamp=(t0 + timedelta(hours=28)).isoformat())
+        self.assertEqual(self.status(), "较稳定掌握")
+        self.event(ident="error", result="incorrect",
+                   timestamp=(t0 + timedelta(hours=29)).isoformat())
+        self.assertEqual(self.status(), "待复习")
+        self.event(ident="new-base", timestamp=(t0 + timedelta(hours=30)).isoformat())
+        self.assertEqual(self.status(), "本次独立完成")
+
+    def test_future_attempt_rejected(self):
+        self.init()
+        timestamp = (datetime.now(UTC) + timedelta(days=2)).isoformat()
+        err = self.call("record", "--course", "经济数学", "--objective", "商法则",
+                        "--question-id", "q1", "--activity", "practice", "--result", "correct",
+                        "--hint-level", "0", "--verification", "checked",
+                        "--timestamp", timestamp, ok=False)
+        self.assertIn("future", err["error"])
+        self.assertFalse(json.loads(self.store.read_text())["attempts"])
 
     def test_summary_is_not_reminder(self):
         self.init()
