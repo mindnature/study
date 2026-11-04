@@ -1,22 +1,76 @@
-name: Validate Skill
+name: Test and Release Skill
 on:
   push:
+    branches: [main, 'feat/**']
   pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  check:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Local storage regression tests
+      - name: Regression tests
         run: python -m unittest discover -s tests -p 'test_*.py' -v
-      - name: Build distributable Skill ZIP
+      - name: Build direct-import Skill ZIP
         run: python scripts/build_release.py
-      - name: Validate Skill package and manual scenario schema
+      - name: Validate package and SHA256
         run: python scripts/validate.py
+      - name: Verify SHA256
+        run: cd dist && sha256sum -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: zhixue-agent-skill-v0.2.0
-          path: dist/zhixue-agent-skill-v0.2.0.zip
+          name: zhixue-agent-skill
+          path: |
+            dist/zhixue-agent-skill-v*.zip
+            dist/SHA256SUMS
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Windows regression tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Windows packaging & validation
+        run: |
+          python scripts/build_release.py
+          python scripts/validate.py
+  publish:
+    needs: [linux, windows]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and validate release
+        run: |
+          python scripts/build_release.py
+          python scripts/validate.py
+          cd dist && sha256sum -c SHA256SUMS
+      - name: Publish immutable versioned GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION=$(cat skills/zhixue-agent/VERSION)
+          TAG="v${VERSION}"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving published files unchanged"
+          else
+            gh release create "$TAG" \
+              "dist/zhixue-agent-skill-v${VERSION}.zip" dist/SHA256SUMS \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "知学 Agent v${VERSION}" \
+              --notes-file docs/RELEASE_NOTES.md
+          fi
