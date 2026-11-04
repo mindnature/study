@@ -120,23 +120,38 @@ def init(file: Path, consent: bool) -> dict:
 
 
 def choose_status(attempts: list[dict]) -> str:
+    """Derive conservative mastery from distinct, verified learning evidence.
+
+    A later incorrect attempt invalidates earlier mastery *for the current
+    status*, without deleting any historic records. Same-question replays
+    cannot count as independent transfer or delayed testing.
+    """
     if not attempts:
         return "学习中"
-    events = sorted(attempts, key=lambda x: x["attempted_at"])
-    if events[-1]["result"] == "incorrect":
+    events = sorted(attempts, key=lambda x: x["attempted_at"])  # stable for equal timestamps
+    last_wrong = max((i for i, e in enumerate(events) if e["result"] == "incorrect"), default=-1)
+    if last_wrong == len(events) - 1:
         return "待复习"
-    strong = [x for x in events if x["result"] == "correct" and x["hint_level"] == 0
+    current = events[last_wrong + 1:]
+    strong = [x for x in current if x["result"] == "correct" and x["hint_level"] == 0
               and x["verification"] in TRUSTED]
     base = next((x for x in strong if x["activity"] == "practice"), None)
     if base is None:
-        return "学习中"
-    transfer = next((x for x in strong if x["activity"] == "transfer" and
-                     parse_time(x["attempted_at"]) >= parse_time(base["attempted_at"])), None)
+        return "待复习" if last_wrong >= 0 else "学习中"
+    transfer = next(
+        (x for x in strong if x["activity"] == "transfer"
+         and x["question_id"] != base["question_id"]
+         and parse_time(x["attempted_at"]) >= parse_time(base["attempted_at"])),
+        None,
+    )
     if transfer is None:
         return "本次独立完成"
-    delayed = any(x["activity"] == "delayed" and
-                  parse_time(x["attempted_at"]) - parse_time(transfer["attempted_at"]) >= timedelta(hours=24)
-                  for x in strong)
+    delayed = any(
+        x["activity"] == "delayed"
+        and x["question_id"] not in (base["question_id"], transfer["question_id"])
+        and parse_time(x["attempted_at"]) - parse_time(transfer["attempted_at"]) >= timedelta(hours=24)
+        for x in strong
+    )
     return "较稳定掌握" if delayed else "初步迁移成功"
 
 
@@ -167,6 +182,8 @@ def record_attempt(file: Path, args: argparse.Namespace) -> dict:
     if not attempt_id.strip() or len(attempt_id) > 160:
         raise ValueError("invalid attempt_id")
     time = parse_time(args.timestamp) if args.timestamp else now_utc()
+    if time > now_utc() + timedelta(minutes=5):
+        raise ValueError("attempt timestamp cannot be in the future")
     event = {"attempt_id": attempt_id, "course": args.course, "objective": args.objective,
              "question_id": args.question_id, "activity": args.activity, "result": args.result,
              "hint_level": args.hint_level, "verification": args.verification,
