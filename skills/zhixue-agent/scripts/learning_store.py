@@ -209,6 +209,11 @@ def record_attempt(file: Path, args: argparse.Namespace) -> dict:
 
 
 def main() -> int:
+    # Windows console/redirected output may use legacy cp1252/cp936 encodings;
+    # force UTF-8 so Chinese course titles and study status survive JSON output.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Local-only evidence log for 知学 Agent (optional)")
     parser.add_argument("--workspace", required=True, help="Existing user-selected work folder; never Skill folder")
     subs = parser.add_subparsers(dest="action", required=True)
