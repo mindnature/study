@@ -19,7 +19,11 @@ with zipfile.ZipFile(DEST, "w") as archive:
         item = zipfile.ZipInfo(relative, date_time=(2020, 1, 1, 0, 0, 0))
         item.compress_type = zipfile.ZIP_DEFLATED
         item.external_attr = (0o644 & 0xFFFF) << 16
-        archive.writestr(item, p.read_bytes())
+        data = p.read_bytes()
+        # Normalize Git for Windows CRLF checkouts to a cross-platform LF release.
+        if p.suffix.lower() in (".md", ".py", ".txt", ".json", ".yml", ".yaml") or p.name == "VERSION":
+            data = data.replace(b"\r\n", b"\n")
+        archive.writestr(item, data)
 digest = hashlib.sha256(DEST.read_bytes()).hexdigest()
 (ROOT / "dist" / "SHA256SUMS").write_text(f"{digest}  {DEST.name}\n", encoding="utf-8")
 print(f"Built: {DEST}")
