@@ -1,41 +1,55 @@
-# 知学 Agent Skill（Study）
+# 知学 Agent · V1.0.0
 
-让 WorkBuddy、Codex 等支持 Agent Skills 的智能体直接充当中文学习教练：先诊断、再引导、逐题练习、独立测评、复习计划。
+**把 AI 变成真正会教、能检测学习效果、能继续上次学习的中文学习教练。**
 
-> V0.1.0 是原生教学 Skill 样包，不是 DeepTutor 官方产品。默认不包含 DeepTutor 引擎，不需要 Docker/Python/API Key（宿主模型的使用规则仍然适用）。
+本项目是适用于 WorkBuddy、Codex 等支持 Agent Skills 的**独立开源 Skill**。普通用户使用现有宿主模型，不需要另装 DeepTutor、Docker、Python、Node.js，也不需要额外购买大模型 API。宿主平台自身的订阅或模型调用可能有费用。
 
-## 普通人最省事的安装方式
+> 注意：知学 Agent **不是 DeepTutor 本体**，不包含 HKUDS 原版 Mastery Path 或 RAG 引擎；只借鉴掌握导向的教学设计。原版 DeepTutor CLI 仅为可选高级连接。
 
-复制以下指令发给有文件操作权限的 WorkBuddy 或其他智能体：
+## 一句话安装（推荐）
 
-> 请从 https://github.com/mindnature/study 安装「知学 Agent」Skill。先阅读仓库的 SKILL.md 和 README.md，检查安全性。优先把 skills/zhixue-agent 目录安装到你的 Skills 目录，重新加载并确认启用。不要安装 Docker、Python 或 DeepTutor，不要运行远程脚本，不要索要 API Key。安装后用一道导数诊断题验证五步学习流程，并说明真实启用状态。如果当前客户端不能安装 Skill，请明确说明，不要假装成功。
+把下面内容复制给 WorkBuddy、Codex 等有 Skills 和文件权限的智能体：
 
-安装完成后说：“使用知学 Agent 教我函数极限，先诊断，不要直接给答案。”
+> 请从 https://github.com/mindnature/study 安装最新版「知学 Agent」。阅读 SKILL.md 后仅安装 skills/zhixue-agent 目录到用户级 Skills 文件夹，不覆盖其他技能和学习数据。不要安装 Python、Docker、Node.js 或 DeepTutor，不索要 API Key，不执行远程安装脚本。安装后重载技能，报告实际启用的技能名称、版本和路径，再用一道数学题检验每轮只问一个问题。若没成功，请明确报告问题。
 
-不支持从 GitHub 自动安装的客户端，可使用 [技能目录](skills/zhixue-agent/) 手动导入；CI 会构建 **Skill ZIP**，可在 [Actions](https://github.com/mindnature/study/actions) 的成功运行记录中下载构建产物。ZIP 文件的 `SKILL.md` 位于压缩包根目录；GitHub 仓库整体下载的 ZIP 不等于 Skill ZIP。
+**或者：** [直接下载最新 Skill ZIP](https://github.com/mindnature/study/releases/latest) → 在 WorkBuddy 支持 ZIP 导入时导入，或交给智能体完成解压和安装。注意：**Code → Download ZIP** 是整个仓库，不是专用 Skill ZIP。
 
-## 功能与边界
+[详细安装与排错](INSTALL.md) · [技能入口](skills/zhixue-agent/SKILL.md) · [版本发布](https://github.com/mindnature/study/releases)
 
-| 能力 | 默认原生模式 |
+## 用法
+- “知学 Agent，教我函数极限，一次只问一道题。”
+- “根据我上传的讲义出三道题，每次先给我一道。”
+- “这题我不会，先给我一点提示。”
+- “不要再提示了，考考我是不是真的学会。”
+- “帮我保存错题记录，下一次继续学习。”（首次需要授权本地文件位置）
+- “直接告诉我答案。”（尊重用户选择）
+
+## 功能边界
+
+| 能力 | 当前提供方式 |
 |---|---|
-| 先测基础、分级提示（H1/H2/H3）、逐题练习 | 支持 |
-| 无提示独立测评、变式迁移与复习建议 | 支持，基于宿主模型 |
-| 上传资料问答 | 取决于宿主是否能读取文件，不声称原版 RAG |
-| 自动保存学习进度 | 仅用户同意且宿主有文件写入权限时 |
-| DeepTutor Mastery Path / CLI | **不包含**。有独立安装并配置的原版 CLI 后才可选接入 |
+| 分级提示、一次一问、个性化错误诊断 | 宿主模型遵循 Skill 规则；仍需客户端实测 |
+| 无提示独立测评、变式、延迟复测 | 证据式规则 + 可选本地学习记录 |
+| 依据教材问答、生成练习 | 取决于宿主真实文件读取能力，不伪造引用 |
+| 跨会话恢复学习历史 | 用户明确授权、且宿主具备文件读写权限时 |
+| 自动提醒、云端同步、多学生后台 | 未包含 |
+| DeepTutor 原版 Mastery Path | 未包含；若另装并配置 CLI，才可选连接 |
 
-## 开发者入口
+默认 **不保存历史**。用户第一次同意并选定本地工作区后，学习证据可以保存在 \`.zhixue/learning-records.json\`。支持文件工具的宿主直接读写；已有 Python 的宿主还可选用零依赖的脚本进行原子写入。**基础教学绝不依赖运行脚本。**
 
-- [完整 Skill](skills/zhixue-agent/SKILL.md)
-- [学习记录约定](skills/zhixue-agent/references/progress.md)
-- [DeepTutor 可选接口](skills/zhixue-agent/references/deeptutor-engine.md)
-- [本地静态校验](scripts/validate.py)
-- [Skill ZIP 构建](scripts/build_release.py)
-- [验收场景](examples/acceptance-tests.md)
-- [第三方声明](THIRD_PARTY.md)
+## 安全、可验证与分发
 
-开发者可运行 `python scripts/build_release.py && python scripts/validate.py`。普通用户不需要执行。
+- 学习档案、教材及密钥不应提交到 GitHub；用户可以随时撤销文件写入授权。
+- v1.0.0 包通过 Linux、Windows CI 自动测试后，由 GitHub Releases 发布永久 ZIP 并附 SHA256SUMS。
+- 自动测试负责本地代码正确性、压缩包结构与脚本行为，**不证明 WorkBuddy/Codex 的每种模型都能按规则教学**；真实设备验收请见 [验收指南](examples/acceptance-tests.md)。
+- 有关 V0.1/V0.2 升级，请见 [迁移与升级说明](docs/UPGRADING.md)。
 
-## 许可与免责声明
+## 开发者
 
-原创 Skill 文档和辅助脚本采用 MIT License。借鉴 DeepTutor 的教学设计理念，但不包含其源码、不代表 HKUDS 官方出品。初版尚未在所有 WorkBuddy 版本上完成真实安装验证；不得将正常触发提示词误认为已接入 DeepTutor 引擎。
+~~~bash
+python -m unittest discover -s tests -p 'test_*.py' -v
+python scripts/build_release.py
+python scripts/validate.py
+~~~
+
+以上命令仅供开发维护，普通用户**不需要**运行。原创 Skill 代码与文档使用 [MIT 许可](LICENSE)，第三方声明见 [THIRD_PARTY.md](THIRD_PARTY.md)。
